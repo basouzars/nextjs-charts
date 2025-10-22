@@ -38,7 +38,22 @@ export default function ExcelUploader({ onDataLoaded }: ExcelUploaderProps) {
           const rowData: Record<string, string | number | Date | null | undefined> = {};
           row.eachCell((cell, colNumber) => {
             const header = headers[colNumber - 1];
-            rowData[header] = cell.value as string | number | Date | null | undefined;
+            let value = cell.value as string | number | Date | null | undefined;
+            
+            // Convert numeric strings to numbers
+            if (typeof value === 'string') {
+              // Check if the string represents a number (including negative, with . or , as separators)
+              const numericPattern = /^-?[\d,]+\.?\d*$|^-?\d*\.[\d,]+$/;
+              if (numericPattern.test(value.trim())) {
+                // Remove commas and convert to number
+                const numericValue = parseFloat(value.replace(/,/g, ''));
+                if (!isNaN(numericValue)) {
+                  value = numericValue;
+                }
+              }
+            }
+            
+            rowData[header] = value;
           });
           data.push(rowData);
         }
