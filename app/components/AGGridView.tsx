@@ -18,19 +18,107 @@ interface AGGridViewProps {
   headers: string[];
 }
 
+/**
+ * Detects the data type of a column based on its values
+ */
+function detectColumnType(data: ExcelData, header: string): 'number' | 'date' | 'boolean' | 'text' {
+  if (!data || data.length === 0) return 'text';
+  
+  // Sample the first few non-null values to determine type
+  const sampleSize = Math.min(10, data.length);
+  let numberCount = 0;
+  let dateCount = 0;
+  let booleanCount = 0;
+  let validSamples = 0;
+  
+  for (let i = 0; i < sampleSize && i < data.length; i++) {
+    const value = data[i][header];
+    if (value === null || value === undefined || value === '') continue;
+    
+    validSamples++;
+    
+    if (typeof value === 'number') {
+      numberCount++;
+    } else if (value instanceof Date) {
+      dateCount++;
+    } else if (typeof value === 'boolean') {
+      booleanCount++;
+    }
+  }
+  
+  // Determine type based on majority
+  if (validSamples === 0) return 'text';
+  
+  const threshold = validSamples * 0.8; // 80% threshold
+  
+  if (numberCount >= threshold) return 'number';
+  if (dateCount >= threshold) return 'date';
+  if (booleanCount >= threshold) return 'boolean';
+  
+  return 'text';
+}
+
 export default function AGGridView({ data, headers }: AGGridViewProps) {
   const columnDefs: ColDef[] = useMemo(() => {
-    return headers.map(header => ({
-      field: header,
-      filter: true,
-      sortable: true,
-      resizable: true,
-      editable: true,
-      enableRowGroup: true,
-      enablePivot: true,
-      enableValue: true,
-    }));
-  }, [headers]);
+    return headers.map(header => {
+      const columnType = detectColumnType(data, header);
+      
+      // Configure filter based on detected type
+      let filter: string | boolean = 'agTextColumnFilter';
+      let filterParams = {};
+      
+      switch (columnType) {
+        case 'number':
+          filter = 'agNumberColumnFilter';
+          filterParams = {
+            buttons: ['reset', 'apply'],
+            allowedCharPattern: '\\d\\-\\,\\.',
+            numberParser: (text: string | null) => {
+              return text == null ? null : parseFloat(text.replace(/,/g, ''));
+            },
+          };
+          break;
+        case 'date':
+          filter = 'agDateColumnFilter';
+          filterParams = {
+            buttons: ['reset', 'apply'],
+            comparator: (filterDate: Date, cellValue: string | Date | null) => {
+              if (cellValue == null) return -1;
+              const cellDate = cellValue instanceof Date ? cellValue : new Date(cellValue);
+              if (cellDate < filterDate) return -1;
+              if (cellDate > filterDate) return 1;
+              return 0;
+            },
+          };
+          break;
+        case 'boolean':
+          filter = 'agSetColumnFilter';
+          filterParams = {
+            buttons: ['reset', 'apply'],
+          };
+          break;
+        default:
+          filter = 'agTextColumnFilter';
+          filterParams = {
+            buttons: ['reset', 'apply'],
+            filterOptions: ['contains', 'notContains', 'equals', 'notEqual', 'startsWith', 'endsWith'],
+            defaultOption: 'contains',
+          };
+      }
+      
+      return {
+        field: header,
+        filter,
+        filterParams,
+        sortable: true,
+        resizable: true,
+        editable: true,
+        enableRowGroup: true,
+        enablePivot: true,
+        enableValue: true,
+      };
+    });
+  }, [headers, data]);
 
   const defaultColDef: ColDef = useMemo(() => ({
     flex: 1,
@@ -43,6 +131,7 @@ export default function AGGridView({ data, headers }: AGGridViewProps) {
   const gridOptions: GridOptions = useMemo(() => ({
     rowGroupPanelShow: 'always',
     pivotPanelShow: 'always',
+    enableAdvancedFilter: true,
     sideBar: {
       toolPanels: [
         {
