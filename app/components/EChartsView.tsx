@@ -50,7 +50,7 @@ export default function EChartsView({ data, headers }: EChartsViewProps) {
       },
       series: numericColumns.slice(0, maxSeries).map(col => ({
         name: col,
-        type: chartType,
+        type: chartType === 'area' ? 'line' : chartType,
         data: limitedData.map(row => Number(row[col]) || 0),
         ...(chartType === 'area' ? { areaStyle: {} } : {})
       }))
