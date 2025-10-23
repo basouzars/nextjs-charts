@@ -21,6 +21,7 @@ export default function IntegratedDataView({ data, headers }: IntegratedDataView
   const [rowSelectionModel, setRowSelectionModel] = useState<GridRowSelectionModel>([]);
   const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar');
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+  const [chartsEnabled, setChartsEnabled] = useState(false);
 
   const columns: GridColDef[] = useMemo(() => {
     return headers.map((header) => ({
@@ -57,8 +58,10 @@ export default function IntegratedDataView({ data, headers }: IntegratedDataView
     }) || headers[0];
   }, [headers, data]);
 
-  // Filter data based on selected rows
+  // Filter data based on selected rows - only compute when charts are enabled
   const chartData = useMemo(() => {
+    if (!chartsEnabled) return null;
+    
     const selectedData = rowSelectionModel.length > 0
       ? data.filter((_, index) => rowSelectionModel.includes(index))
       : data;
@@ -74,10 +77,12 @@ export default function IntegratedDataView({ data, headers }: IntegratedDataView
         label: col,
       })),
     };
-  }, [data, rowSelectionModel, selectedColumns, numericColumns, categoryColumn]);
+  }, [chartsEnabled, data, rowSelectionModel, selectedColumns, numericColumns, categoryColumn]);
 
-  // Pie chart data (for first selected column or first numeric column)
+  // Pie chart data (for first selected column or first numeric column) - only compute when charts are enabled
   const pieData = useMemo(() => {
+    if (!chartsEnabled) return [];
+    
     const selectedData = rowSelectionModel.length > 0
       ? data.filter((_, index) => rowSelectionModel.includes(index))
       : data.slice(0, 10);
@@ -90,7 +95,7 @@ export default function IntegratedDataView({ data, headers }: IntegratedDataView
       value: Number(row[columnToChart]) || 0,
       label: String(row[categoryColumn] || `Item ${index + 1}`),
     }));
-  }, [data, rowSelectionModel, selectedColumns, numericColumns, categoryColumn]);
+  }, [chartsEnabled, data, rowSelectionModel, selectedColumns, numericColumns, categoryColumn]);
 
   const handleColumnSelectionChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
     const options = event.target.selectedOptions;
@@ -146,6 +151,7 @@ export default function IntegratedDataView({ data, headers }: IntegratedDataView
               value={chartType} 
               onChange={(e) => setChartType(e.target.value as 'bar' | 'line' | 'pie')}
               className="px-3 py-2 border rounded"
+              disabled={!chartsEnabled}
             >
               <option value="bar">Bar</option>
               <option value="line">Line</option>
@@ -160,15 +166,39 @@ export default function IntegratedDataView({ data, headers }: IntegratedDataView
               onChange={handleColumnSelectionChange}
               className="px-3 py-2 border rounded h-24"
               size={5}
+              disabled={!chartsEnabled}
             >
               {numericColumns.map(col => (
                 <option key={col} value={col}>{col}</option>
               ))}
             </select>
           </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              onClick={() => setChartsEnabled(!chartsEnabled)}
+              className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                chartsEnabled 
+                  ? 'bg-red-600 text-white hover:bg-red-700' 
+                  : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
+            >
+              {chartsEnabled ? '❌ Hide Charts' : '📊 Generate Charts'}
+            </button>
+          </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4" style={{ width: '100%', height: 500 }}>
-          {chartType === 'pie' ? (
+          {!chartsEnabled ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center text-gray-500">
+                <div className="text-6xl mb-4">📊</div>
+                <p className="text-xl font-semibold mb-2">Charts Not Generated</p>
+                <p className="text-base">Click &quot;Generate Charts&quot; above to visualize your data</p>
+                <p className="text-sm mt-2 text-gray-400">
+                  This prevents automatic chart generation for large datasets
+                </p>
+              </div>
+            </div>
+          ) : chartData && chartType === 'pie' ? (
             <PieChart
               series={[
                 {
@@ -179,19 +209,19 @@ export default function IntegratedDataView({ data, headers }: IntegratedDataView
               ]}
               height={450}
             />
-          ) : chartType === 'bar' ? (
+          ) : chartData && chartType === 'bar' ? (
             <BarChart
               xAxis={[{ scaleType: 'band', data: chartData.categories }]}
               series={chartData.series}
               height={450}
             />
-          ) : (
+          ) : chartData && chartType === 'line' ? (
             <LineChart
               xAxis={[{ scaleType: 'band', data: chartData.categories }]}
               series={chartData.series}
               height={450}
             />
-          )}
+          ) : null}
         </div>
       </div>
     </div>
