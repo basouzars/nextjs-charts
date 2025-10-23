@@ -1,65 +1,125 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { Container, Box, Typography } from '@mui/material';
+import FileUpload from '@/components/FileUpload';
+import DataGridViewer from '@/components/DataGridViewer';
+import ChartCreator from '@/components/ChartCreator';
+import ChartCard from '@/components/ChartCard';
+
+interface UploadedData {
+  tableName: string;
+  rowCount: number;
+  columns: string[];
+}
+
+interface ChartConfig {
+  id: string;
+  xColumn: string;
+  yColumn: string;
+  chartType: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+}
 
 export default function Home() {
+  const [uploadedData, setUploadedData] = useState<UploadedData | null>(null);
+  const [charts, setCharts] = useState<ChartConfig[]>([]);
+
+  const handleUploadSuccess = (data: UploadedData) => {
+    setUploadedData(data);
+    setCharts([]);
+  };
+
+  const handleCreateChart = (config: {
+    xColumn: string;
+    yColumn: string;
+    chartType: string;
+  }) => {
+    const newChart: ChartConfig = {
+      id: `chart-${Date.now()}`,
+      ...config,
+      position: { x: 20 + charts.length * 30, y: 20 + charts.length * 30 },
+      size: { width: 500, height: 400 },
+    };
+    setCharts([...charts, newChart]);
+  };
+
+  const handleRemoveChart = (id: string) => {
+    setCharts(charts.filter((chart) => chart.id !== id));
+  };
+
+  const handlePositionChange = (id: string, position: { x: number; y: number }) => {
+    setCharts(
+      charts.map((chart) => (chart.id === id ? { ...chart, position } : chart))
+    );
+  };
+
+  const handleSizeChange = (id: string, size: { width: number; height: number }) => {
+    setCharts(charts.map((chart) => (chart.id === id ? { ...chart, size } : chart)));
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <Container maxWidth={false} sx={{ py: 4 }}>
+      <Typography variant="h3" component="h1" gutterBottom align="center">
+        Data Analysis Dashboard
+      </Typography>
+
+      {!uploadedData ? (
+        <FileUpload onUploadSuccess={handleUploadSuccess} />
+      ) : (
+        <>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Data Preview ({uploadedData.rowCount} rows)
+            </Typography>
+            <DataGridViewer
+              tableName={uploadedData.tableName}
+              columns={uploadedData.columns}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          </Box>
+
+          <Box sx={{ mb: 4 }}>
+            <ChartCreator
+              columns={uploadedData.columns}
+              onCreateChart={handleCreateChart}
+            />
+          </Box>
+
+          <Box sx={{ position: 'relative', minHeight: '600px', border: '1px dashed #ccc', borderRadius: 1 }}>
+            {charts.length === 0 ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: '200px',
+                }}
+              >
+                <Typography color="text.secondary">
+                  No charts created yet. Click &quot;Create Chart&quot; to get started.
+                </Typography>
+              </Box>
+            ) : (
+              charts.map((chart) => (
+                <ChartCard
+                  key={chart.id}
+                  id={chart.id}
+                  tableName={uploadedData.tableName}
+                  xColumn={chart.xColumn}
+                  yColumn={chart.yColumn}
+                  chartType={chart.chartType}
+                  onRemove={handleRemoveChart}
+                  position={chart.position}
+                  size={chart.size}
+                  onPositionChange={handlePositionChange}
+                  onSizeChange={handleSizeChange}
+                />
+              ))
+            )}
+          </Box>
+        </>
+      )}
+    </Container>
   );
 }

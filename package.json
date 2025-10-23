@@ -11,6 +11,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
     "@mui/x-charts-premium": "^8.15.0",
     "@mui/x-data-grid-premium": "^8.15.0",
@@ -19,6 +20,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-grid-layout": "^1.5.2",
+    "react-rnd": "^10.5.2",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -32,5 +34,8 @@
     "eslint-config-next": "16.0.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "optionalDependencies": {
+    "@aws-sdk/client-s3": "^3.914.0"
   }
 }
