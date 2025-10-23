@@ -61,12 +61,30 @@ export function createTableFromData(tableName: string, data: unknown[][]) {
   };
 }
 
+function sanitizeIdentifier(identifier: string): string {
+  // Only allow alphanumeric characters and underscores
+  return identifier.replace(/[^a-zA-Z0-9_]/g, '_');
+}
+
+function validateTableExists(db: Database.Database, tableName: string): boolean {
+  const sanitized = sanitizeIdentifier(tableName);
+  const result = db.prepare(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
+  ).get(sanitized) as { name: string } | undefined;
+  return result !== undefined;
+}
+
 export function getTableData(tableName: string, page: number = 0, pageSize: number = 100) {
   const db = getDb();
+  const sanitizedTable = sanitizeIdentifier(tableName);
+  
+  if (!validateTableExists(db, sanitizedTable)) {
+    throw new Error('Table not found');
+  }
   
   const offset = page * pageSize;
-  const rows = db.prepare(`SELECT * FROM "${tableName}" LIMIT ? OFFSET ?`).all(pageSize, offset);
-  const countResult = db.prepare(`SELECT COUNT(*) as count FROM "${tableName}"`).get() as { count: number };
+  const rows = db.prepare(`SELECT * FROM "${sanitizedTable}" LIMIT ? OFFSET ?`).all(pageSize, offset);
+  const countResult = db.prepare(`SELECT COUNT(*) as count FROM "${sanitizedTable}"`).get() as { count: number };
   
   return {
     rows,
@@ -76,14 +94,33 @@ export function getTableData(tableName: string, page: number = 0, pageSize: numb
 
 export function getTableColumns(tableName: string): string[] {
   const db = getDb();
-  const info = db.prepare(`PRAGMA table_info("${tableName}")`).all() as { name: string }[];
+  const sanitizedTable = sanitizeIdentifier(tableName);
+  
+  if (!validateTableExists(db, sanitizedTable)) {
+    throw new Error('Table not found');
+  }
+  
+  const info = db.prepare(`PRAGMA table_info("${sanitizedTable}")`).all() as { name: string }[];
   return info.filter(col => col.name !== 'id').map(col => col.name);
 }
 
 export function getChartData(tableName: string, xColumn: string, yColumn: string) {
   const db = getDb();
+  const sanitizedTable = sanitizeIdentifier(tableName);
+  const sanitizedXCol = sanitizeIdentifier(xColumn);
+  const sanitizedYCol = sanitizeIdentifier(yColumn);
   
-  const rows = db.prepare(`SELECT "${xColumn}", "${yColumn}" FROM "${tableName}" WHERE "${xColumn}" IS NOT NULL AND "${yColumn}" IS NOT NULL`).all();
+  if (!validateTableExists(db, sanitizedTable)) {
+    throw new Error('Table not found');
+  }
+  
+  // Verify columns exist
+  const columns = getTableColumns(sanitizedTable);
+  if (!columns.includes(sanitizedXCol) || !columns.includes(sanitizedYCol)) {
+    throw new Error('Column not found');
+  }
+  
+  const rows = db.prepare(`SELECT "${sanitizedXCol}", "${sanitizedYCol}" FROM "${sanitizedTable}" WHERE "${sanitizedXCol}" IS NOT NULL AND "${sanitizedYCol}" IS NOT NULL`).all();
   
   return rows;
 }
