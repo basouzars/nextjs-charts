@@ -1,12 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import ExcelUploader from './components/ExcelUploader';
-import AGGridView from './components/AGGridView';
-import MUIDataGridView from './components/MUIDataGridView';
-import AGChartsView from './components/AGChartsView';
-import MUIChartsView from './components/MUIChartsView';
-import EChartsView from './components/EChartsView';
+import { useState, useEffect } from 'react';
+import AppHeader from './components/AppHeader';
+import IntegratedDataView from './components/IntegratedDataView';
 import { ExcelData } from './types/excel';
 
 export default function Home() {
@@ -18,36 +14,36 @@ export default function Home() {
     setHeaders(loadedHeaders);
   };
 
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('excelData');
+    if (savedData) {
+      try {
+        const { data: savedDataRows, headers: savedHeaders } = JSON.parse(savedData);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setData(savedDataRows);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setHeaders(savedHeaders);
+      } catch (e) {
+        console.error('Failed to parse saved data:', e);
+      }
+    }
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <main className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-center">
-          Excel Data Grids & Charts Comparison
-        </h1>
-        
-        <ExcelUploader onDataLoaded={handleDataLoaded} />
-
-        {data.length > 0 && (
-          <>
-            <div className="space-y-8">
-              <AGGridView data={data} headers={headers} />
-              <MUIDataGridView data={data} headers={headers} />
-            </div>
-
-            <div className="mt-12">
-              <h2 className="text-3xl font-bold mb-6">Charts Comparison</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <AGChartsView data={data} headers={headers} />
-                <MUIChartsView data={data} headers={headers} />
-                <EChartsView data={data} headers={headers} />
-              </div>
-            </div>
-          </>
-        )}
-
-        {data.length === 0 && (
-          <div className="text-center text-gray-500 mt-12">
-            <p className="text-lg">Upload an Excel file to see the grids and charts in action!</p>
+    <div className="min-h-screen bg-gray-50">
+      <AppHeader onDataLoaded={handleDataLoaded} />
+      <main className="max-w-7xl mx-auto p-8">
+        {data.length > 0 ? (
+          <IntegratedDataView data={data} headers={headers} />
+        ) : (
+          <div className="text-center text-gray-500 mt-12 p-12 bg-white rounded-lg shadow">
+            <div className="text-6xl mb-4">📊</div>
+            <p className="text-2xl font-semibold mb-2">No Data Loaded</p>
+            <p className="text-lg">Click &quot;Load Excel File&quot; in the header to upload your data</p>
+            <p className="text-sm mt-4 text-gray-400">
+              Once loaded, you&apos;ll see your data in an interactive grid with integrated charts
+            </p>
           </div>
         )}
       </main>

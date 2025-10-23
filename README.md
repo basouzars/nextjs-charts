@@ -1,32 +1,42 @@
-# Excel Data Grids & Charts Comparison
+# MUI X Data Grid & Charts - Portfolio Analysis
 
-A Next.js 15 application that allows you to upload Excel files and compare data grid and charting libraries side-by-side.
+A Next.js 15 application for analyzing fixed income portfolios with integrated data grids and charts. Features custom formula support, drag-and-drop layouts, and real-time data-to-chart integration.
 
 ## Features
 
-### Data Grids
-- **AG Grid Enterprise** - Full-featured data grid with:
+### Data Grid
+- **MUI X Data Grid Premium** - Full-featured data grid with:
   - Advanced filtering and sorting
-  - Row grouping and pivoting
-  - Column management sidebar
-  - Status bar with aggregations
-  - Range selection
-  - Built-in charting
-  - Pagination
-
-- **MUI X Data Grid Premium** - Material-UI data grid with:
   - Quick search functionality
   - Column management
-  - Advanced filtering
   - Density controls
   - Export capabilities
   - Grouping and aggregation
+  - Row selection with chart integration
   - Pagination
+  - Inline editing
 
 ### Charts
-- **AG Charts** - Enterprise-grade charts with interactive legends
-- **MUI X Charts** - Material Design charts with responsive layouts
-- **ECharts (Apache)** - Open-source charting library with rich visualizations
+- **MUI X Charts** - Material Design charts with:
+  - Bar, Line, and Pie chart types
+  - Real-time integration with data grid row selection
+  - Multiple column selection for comparison
+  - Responsive layouts
+
+### Portfolio Analysis Page
+- **Custom Formula Builder** - Define custom parameters with formulas
+  - Create derived metrics from existing columns
+  - Support for basic arithmetic operations (+, -, *, /)
+  - Example: `YieldSpread = Yield - Coupon`
+- **Drag-and-Drop Layout** - Fully customizable dashboard
+  - Reposition charts and grids by dragging
+  - Resize components by dragging corners
+  - Layout automatically saved to localStorage
+- **Fixed Income Optimized** - Designed for:
+  - Wide tables with many parameters (10+ columns)
+  - Compact data sets (~8 rows)
+  - Bond analysis metrics (Coupon, Yield, Duration, Convexity, etc.)
+  - Ticker-based comparisons
 
 ## Getting Started
 
@@ -57,39 +67,46 @@ npm start
 
 ## Usage
 
-1. Click "Choose File" to upload an Excel file (.xlsx or .xls)
-2. View your data in both AG Grid and MUI Data Grid Premium
-3. Compare visualizations across AG Charts, MUI Charts, and ECharts
-4. Use the advanced features of each grid:
-   - Sort, filter, and search data
-   - Group rows by dragging columns
-   - Export data
-   - Customize column visibility
-   - And much more!
+### Main Page
+1. Upload an Excel file (.xlsx or .xls)
+2. View your data in MUI Data Grid Premium
+3. Select rows in the grid to filter chart data
+4. Choose columns to visualize from the dropdown
+5. Switch between Bar, Line, and Pie charts
 
-## Sample Data
+### Portfolio Analysis Page
+1. Click "Portfolio Analysis →" to access the custom formula builder
+2. Define new parameters using formulas based on existing columns
+   - Example: Create "YieldSpread" with formula "Yield - Coupon"
+3. Drag chart and grid components to rearrange your dashboard
+4. Resize components by dragging the bottom-right corner
+5. Your layout is automatically saved and restored on next visit
 
-A sample Excel file is included at `public/samples/sample-data.xlsx` with sales data to test the features.
+### Sample Data
+The portfolio page comes pre-loaded with 8 sample fixed income bonds including:
+- Ticker symbols
+- Coupon rates
+- Maturity dates
+- Prices
+- Yields
+- Duration
+- Convexity
+- Credit ratings
 
 ## Technology Stack
 
 - **Framework**: Next.js 15 (React 19)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Data Grids**:
-  - AG Grid Community & Enterprise v32.3.3
-  - MUI X Data Grid Premium v7.24.0
-- **Charts**:
-  - AG Charts Enterprise v10.3.3
-  - MUI X Charts v7.24.0
-  - ECharts v5.5.1
+- **Data Grid**: MUI X Data Grid Premium v7.24.0
+- **Charts**: MUI X Charts v7.24.0
+- **Layout**: react-grid-layout for drag-and-drop functionality
 - **Excel Parsing**: ExcelJS v4.4.0
 
 ## License Notes
 
-- AG Grid and AG Charts use trial licenses for evaluation purposes
 - MUI X uses a trial license for evaluation purposes
-- For production use, obtain proper licenses from [AG Grid](https://ag-grid.com/licensing/) and [MUI](https://mui.com/x/introduction/licensing/)
+- For production use, obtain proper licenses from [MUI](https://mui.com/x/introduction/licensing/)
 
 ## Security
 
