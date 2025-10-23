@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import AppHeader from '../components/AppHeader';
 import { LicenseInfo } from '@mui/x-license';
 import { BarChart } from '@mui/x-charts/BarChart';
@@ -13,14 +13,52 @@ LicenseInfo.setLicenseKey('e0d9bb8070ce0054c9d9ecb6e82cb58fTz0wLEU9MzI0NzIxNDQwM
 
 type ChartType = 'bar' | 'line' | 'pie' | 'scatter';
 
+// Load initial data from localStorage
+function getInitialData(): { data: ExcelData; headers: string[] } {
+  if (typeof window === 'undefined') {
+    return { data: [], headers: [] };
+  }
+  
+  const savedData = localStorage.getItem('excelData');
+  if (savedData) {
+    try {
+      const parsed = JSON.parse(savedData);
+      return { data: parsed.data || [], headers: parsed.headers || [] };
+    } catch (e) {
+      console.error('Failed to parse saved data:', e);
+    }
+  }
+  return { data: [], headers: [] };
+}
+
+// Auto-select columns helper
+function getAutoSelectedColumns(data: ExcelData, headers: string[]) {
+  const firstString = headers.find(h => 
+    data.some(row => typeof row[h] === 'string')
+  );
+  const firstNumeric = headers.find(h => 
+    data.some(row => typeof row[h] === 'number')
+  );
+  
+  return {
+    xAxis: firstString || '',
+    yAxis: firstNumeric ? [firstNumeric] : [],
+    pieValueColumn: firstNumeric || '',
+    pieLabelColumn: firstString || '',
+  };
+}
+
 export default function CustomChartsPage() {
-  const [data, setData] = useState<ExcelData>([]);
-  const [headers, setHeaders] = useState<string[]>([]);
+  const initialData = getInitialData();
+  const autoSelected = getAutoSelectedColumns(initialData.data, initialData.headers);
+  
+  const [data, setData] = useState<ExcelData>(initialData.data);
+  const [headers, setHeaders] = useState<string[]>(initialData.headers);
   const [chartType, setChartType] = useState<ChartType>('bar');
   
   // Chart configuration
-  const [xAxis, setXAxis] = useState<string>('');
-  const [yAxis, setYAxis] = useState<string[]>([]);
+  const [xAxis, setXAxis] = useState<string>(autoSelected.xAxis);
+  const [yAxis, setYAxis] = useState<string[]>(autoSelected.yAxis);
   const [chartHeight, setChartHeight] = useState(400);
   const [showLegend, setShowLegend] = useState(true);
   const [legendPosition, setLegendPosition] = useState<'top' | 'bottom' | 'left' | 'right'>('bottom');
@@ -31,8 +69,8 @@ export default function CustomChartsPage() {
   const [fillArea, setFillArea] = useState(false);
   
   // Pie chart specific
-  const [pieValueColumn, setPieValueColumn] = useState<string>('');
-  const [pieLabelColumn, setPieLabelColumn] = useState<string>('');
+  const [pieValueColumn, setPieValueColumn] = useState<string>(autoSelected.pieValueColumn);
+  const [pieLabelColumn, setPieLabelColumn] = useState<string>(autoSelected.pieLabelColumn);
   const [innerRadius, setInnerRadius] = useState(0);
   const [outerRadius, setOuterRadius] = useState(100);
 
@@ -53,39 +91,6 @@ export default function CustomChartsPage() {
     }
     if (firstString) setPieLabelColumn(firstString);
   };
-
-  // Load data from localStorage on mount
-  useEffect(() => {
-    const savedData = localStorage.getItem('excelData');
-    if (savedData) {
-      try {
-        const { data: savedDataRows, headers: savedHeaders } = JSON.parse(savedData);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setData(savedDataRows);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setHeaders(savedHeaders);
-        // Auto-select columns
-        const firstString = savedHeaders.find((h: string) => 
-          savedDataRows.some((row: Record<string, unknown>) => typeof row[h] === 'string')
-        );
-        const firstNumeric = savedHeaders.find((h: string) => 
-          savedDataRows.some((row: Record<string, unknown>) => typeof row[h] === 'number')
-        );
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        if (firstString) setXAxis(firstString);
-        if (firstNumeric) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setYAxis([firstNumeric]);
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setPieValueColumn(firstNumeric);
-        }
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        if (firstString) setPieLabelColumn(firstString);
-      } catch (e) {
-        console.error('Failed to parse saved data:', e);
-      }
-    }
-  }, []);
 
   // Get numeric and string columns
   const numericColumns = useMemo(() => {

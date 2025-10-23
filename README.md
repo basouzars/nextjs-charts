@@ -1,6 +1,6 @@
 # MUI X Data Grid & Charts - Portfolio Analysis
 
-A Next.js 15 application for analyzing fixed income portfolios with integrated data grids and charts. Features custom formula support, drag-and-drop layouts, and real-time data-to-chart integration.
+A Next.js 16 application for analyzing fixed income portfolios with integrated data grids and charts. Features custom formula support, drag-and-drop layouts, and real-time data-to-chart integration.
 
 ## Features
 
@@ -95,9 +95,9 @@ The portfolio page comes pre-loaded with 8 sample fixed income bonds including:
 
 ## Technology Stack
 
-- **Framework**: Next.js 15 (React 19)
+- **Framework**: Next.js 16 (React 19)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS v4
 - **Data Grid**: MUI X Data Grid Premium v7.24.0
 - **Charts**: MUI X Charts v7.24.0
 - **Layout**: react-grid-layout for drag-and-drop functionality

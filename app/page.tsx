@@ -1,34 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import AppHeader from './components/AppHeader';
 import IntegratedDataView from './components/IntegratedDataView';
 import { ExcelData } from './types/excel';
 
+// Load initial data from localStorage
+function getInitialData(): { data: ExcelData; headers: string[] } {
+  if (typeof window === 'undefined') {
+    return { data: [], headers: [] };
+  }
+  
+  const savedData = localStorage.getItem('excelData');
+  if (savedData) {
+    try {
+      const parsed = JSON.parse(savedData);
+      return { data: parsed.data || [], headers: parsed.headers || [] };
+    } catch (e) {
+      console.error('Failed to parse saved data:', e);
+    }
+  }
+  return { data: [], headers: [] };
+}
+
 export default function Home() {
-  const [data, setData] = useState<ExcelData>([]);
-  const [headers, setHeaders] = useState<string[]>([]);
+  const [data, setData] = useState<ExcelData>(() => getInitialData().data);
+  const [headers, setHeaders] = useState<string[]>(() => getInitialData().headers);
 
   const handleDataLoaded = (loadedData: ExcelData, loadedHeaders: string[]) => {
     setData(loadedData);
     setHeaders(loadedHeaders);
   };
-
-  // Load data from localStorage on mount
-  useEffect(() => {
-    const savedData = localStorage.getItem('excelData');
-    if (savedData) {
-      try {
-        const { data: savedDataRows, headers: savedHeaders } = JSON.parse(savedData);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setData(savedDataRows);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setHeaders(savedHeaders);
-      } catch (e) {
-        console.error('Failed to parse saved data:', e);
-      }
-    }
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
